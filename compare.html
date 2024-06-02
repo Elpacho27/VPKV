@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usporedba</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .chart {
+            width: 100%;
+            height: 100%;
+            margin: 20px auto;
+        }
+
+        .checkbox-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            max-width: 100%;
+            padding-top: 50px;
+        }
+
+        .checkbox-container label {
+            margin-right: 20px;
+        }
+
+        .checkbox-container.hidden {
+            display: none;
+        }
+
+        #show-stats,
+        #show-checkboxes {
+            display: block;
+            margin: 20px auto;
+            height: 35px !important;
+            width: 100px !important;
+            background-color: #20376f;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="checkbox-container" id="checkbox-container"></div>
+    <button id="show-stats">Compare</button>
+    <button id="show-checkboxes" class="hidden">Show Checkboxes</button>
+    <svg class="chart"></svg>
+
+    <script>
+        d3.json("players.json").then(function (data) {
+            const checkboxContainer = d3.select("#checkbox-container");
+
+            data.forEach(player => {
+                checkboxContainer.append("div")
+                    .html(`<label><input type="checkbox" value="${player.NAME}">${player.NAME}</label>`);
+            });
+
+            const showStatsButton = document.getElementById("show-stats");
+            const showCheckboxesButton = document.getElementById("show-checkboxes");
+
+            showStatsButton.addEventListener("click", function () {
+                const selectedPlayers = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
+
+                if (selectedPlayers.length === 0) {
+                    alert("Please select at least one player.");
+                    return;
+                }
+
+                checkboxContainer.classed("hidden", true);
+                showCheckboxesButton.classList.remove("hidden");
+
+                const filteredData = data.filter(d => selectedPlayers.includes(d.NAME));
+
+                d3.select(".chart").selectAll("*").remove();
+
+                const margin = { top: 20, right: 80, bottom: 100, left: 50 },
+                    width = parseInt(d3.select(".chart").style("width"), 10) - margin.left - margin.right,
+                    height = 400 - margin.top - margin.bottom - 50;
+
+                const svg = d3.select(".chart")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+                const xScale = d3.scaleBand()
+                    .domain(selectedPlayers)
+                    .range([0, width])
+                    .padding(0.2);
+
+                const yScale = d3.scaleLinear()
+                    .domain([0, d3.max(filteredData, d => Math.max(d.G, d.AS, d.BL))])
+                    .nice()
+                    .range([height, 0]);
+
+                const barWidth = xScale.bandwidth() / 3;
+
+                const stats = ["G", "AS", "BL"];
+                const colors = {
+                    "G": "#20376f",
+                    "AS": "#e20014",
+                    "BL": "green"
+                };
+
+                stats.forEach((stat, index) => {
+                    svg.selectAll(".bar-" + stat)
+                        .data(filteredData)
+                        .enter().append("rect")
+                        .attr("class", "bar-" + stat)
+                        .attr("x", (d, i) => xScale(d.NAME) + barWidth * index)
+                        .attr("y", d => yScale(d[stat]))
+                        .attr("width", barWidth)
+                        .attr("height", d => height - yScale(d[stat]))
+                        .attr("fill", colors[stat]);
+                });
+
+                svg.append("g")
+                    .attr("transform", "translate(0," + height + ")")
+                    .call(d3.axisBottom(xScale))
+                    .selectAll("text")
+                    .attr("transform", "rotate(-45)")
+                    .style("text-anchor", "end");
+
+                svg.append("g")
+                    .call(d3.axisLeft(yScale));
+
+                const legend = svg.selectAll(".legend")
+                    .data(stats)
+                    .enter().append("g")
+                    .attr("class", "legend")
+                    .attr("transform", function (d, i) { return "translate(0," + i * 20 + ")"; });
+
+                legend.append("rect")
+                    .attr("x", width - 18)
+                    .attr("width", 18)
+                    .attr("height", 18)
+                    .style("fill", d => colors[d]);
+
+                legend.append("text")
+                    .attr("x", width - 24)
+                    .attr("y", 9)
+                    .attr("dy", ".35em")
+                    .style("text-anchor", "end")
+                    .text(function (d) {
+                        if (d === "G") return "Goals";
+                        if (d === "AS") return "Assists";
+                        if (d === "BL") return "Blocks";
+                    });
+            });
+
+            showCheckboxesButton.addEventListener("click", function () {
+                checkboxContainer.classed("hidden", false);
+                showCheckboxesButton.classList.add("hidden");
+            });
+        }).catch(function (error) {
+            console.log("Error loading data:", error);
+        });
+    </script>
+</body>
+
+</html>

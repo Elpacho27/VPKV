@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goals by Club</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .chart {
+            width: 70%;
+            height: 100%;
+            position: absolute;
+            top: 70px;
+            left: 100px;
+        }
+
+        .legend {
+            position: absolute;
+            top: 10px;
+            left: 600px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            fill: #333;
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 10px;
+            margin-top: 50px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+
+        .tooltip {
+            font-family: Arial, sans-serif;
+            font-size: 15px;
+            fill: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <svg class="chart"></svg>
+        <div class="legend"></div>
+    </div>
+
+    <script>
+        d3.json("players.json").then(function (data) {
+            const clubsData = new Map();
+
+            data.forEach(function (d) {
+                const club = d.CLUB;
+                const goals = d.G;
+
+                if (clubsData.has(club)) {
+                    clubsData.set(club, clubsData.get(club) + goals);
+                } else {
+                    clubsData.set(club, goals);
+                }
+            });
+
+            const totalGoals = d3.sum(Array.from(clubsData.values()));
+            const uniqueClubs = Array.from(clubsData.keys());
+            const colorPalette = [
+                "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+                "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
+                "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5",
+                "#c49c94", "#f7b6d2", "#c7c7c7"
+            ];
+
+            const colorScale = d3.scaleOrdinal()
+                .domain(uniqueClubs)
+                .range(colorPalette);
+
+            const pie = d3.pie()
+                .value(d => d[1]);
+
+            const arc = d3.arc()
+                .innerRadius(0)
+                .outerRadius(Math.min(400, 300) / 2 - 10);
+
+            const svg = d3.select('.chart')
+                .attr('width', 400)
+                .attr('height', 300)
+                .append('g')
+                .attr('transform', 'translate(' + 200 + ',' + 150 + ')');
+
+            svg.append('text')
+                .attr('class', 'chart-text')
+                .attr('x', 0)
+                .attr('y', 170)
+                .attr('text-anchor', 'middle')
+                .text(`All club goals: ${totalGoals}`)
+                .attr('transform', 'rotate(0)');
+
+            const arcs = svg.selectAll("arc")
+                .data(pie(Array.from(clubsData)))
+                .enter()
+                .append("g")
+                .attr("class", "arc")
+                .on("mouseover", function (event, d) {
+                    const club = d.data[0];
+                    const goals = d.data[1];
+                    const tooltip = `${club}: ${goals} goals`;
+
+                    svg.append("text")
+                        .attr("class", "tooltip")
+                        .attr("transform", "translate(10, -10)")
+                        .text(tooltip);
+                })
+                .on("mouseout", function () {
+                    svg.select(".tooltip").remove();
+                });
+
+            arcs.append('path')
+                .attr('d', arc)
+                .attr('fill', d => colorScale(d.data[0]));
+
+            const legend = d3.select('.legend')
+                .selectAll('.legend-item')
+                .data(Array.from(clubsData))
+                .enter()
+                .append('div')
+                .attr('class', 'legend-item');
+
+            legend.append('div')
+                .attr('class', 'legend-color')
+                .style('background-color', d => colorScale(d[0]));
+
+            legend.append('span')
+                .text(d => `${d[0]}: ${(d[1] / totalGoals * 100).toFixed(2)}%`);
+
+        }).catch(function (error) {
+            console.log("Error loading data:", error);
+        });
+    </script>
+</body>
+
+</html>
