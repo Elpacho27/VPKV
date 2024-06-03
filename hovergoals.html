@@ -109,21 +109,21 @@
     <script>
         const colors = ['#20376f'];
         let data;
-
+        // Učitavanje podataka iz players.json datoteke
         d3.json("players.json").then(function (loadedData) {
             data = loadedData;
-            updateGraph('G');
+            updateGraph('G'); // Početni graf prikazuje golove 
         }).catch(function (error) {
             console.error("Error loading the data");
         });
-
+        // Funkcija za kreiranje grafikona
         function createGraph(filter) {
             d3.select("svg").remove();
-
+            // Postavljanje margina i dimenzija grafikona
             const margin = { top: 20, right: 30, bottom: 100, left: 60 },
                 width = window.screen.availWidth * 0.45,
                 height = window.screen.availHeight * 0.25;
-
+            //Dodavanje samo svg-a
             const svg = d3.select("body").append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
@@ -132,7 +132,7 @@
 
             const maxValue = d3.max(data, function (d) { return d[filter]; });
             const yTicks = Math.ceil(maxValue / 10) * 10;
-
+            // Skaliranje vrijednosti x i y osi
             const x = d3.scaleBand()
                 .range([0, width])
                 .padding(0.1);
@@ -142,7 +142,7 @@
 
             x.domain(data.map(function (d) { return d.NAME; }));
             y.domain([0, maxValue]);
-
+            // Dodavanje pozadinskih linija na graf
             svg.selectAll(".grid-line")
                 .data(d3.range(0, yTicks + 1, 10))
                 .enter().append("line")
@@ -151,7 +151,7 @@
                 .attr("x2", width)
                 .attr("y1", function (d) { return y(d); })
                 .attr("y2", function (d) { return y(d); });
-
+            // Dodavanje x osi
             svg.append("g")
                 .attr("transform", "translate(0," + height + ")")
                 .call(d3.axisBottom(x))
@@ -163,10 +163,10 @@
                 .attr("class", "player-name");
 
                 
-
+            // Dodavanje y osi
             svg.append("g")
                 .call(d3.axisLeft(y));
-
+             // Dodavanje stupaca (barova)
             svg.selectAll(".bar")
                 .data(data)
                 .enter().append("rect")
@@ -187,6 +187,7 @@
                         .text(d.NAME);
                     d3.select(this).attr("data-color", currentColor);
                 })
+                // Prikazivanje modalnog prozora s detaljima o igraču
                 .on("mouseout", function (event, d) {
                     const color = d3.select(this).attr("data-color");
                     d3.select(this).style("fill", color);
@@ -220,12 +221,12 @@
                     
                 });
 
-
+                 // Zatvaranje modalnog prozora kada se klikne na X
             document.querySelector(".close").onclick = function () {
                 document.getElementById("myModal").style.display = "none";
             };
 
-
+            // Zatvaranje modalnog prozora kada se klikne izvan njega
             window.onclick = function (event) {
                 const modal = document.getElementById("myModal");
                 if (event.target == modal) {
@@ -233,11 +234,11 @@
                 }
             };
         }
-
+         // Funkcija za ažuriranje grafa prema odabranom buttonu
         function updateGraph(filter) {
             createGraph(filter);
 
-
+            // Postavljanje aktivne klase na odgovarajući button
             document.querySelectorAll('.filter-button').forEach(button => {
                 button.classList.remove('active');
             });

@@ -75,13 +75,14 @@
     </div>
 
     <script>
+        // Učitavanje podataka iz players.json datoteke
         d3.json("players.json").then(function (data) {
             const margin = { top: 20, right: 30, bottom: 100, left: 60 },
                 width = window.screen.availWidth * 0.45,
                 height = window.screen.availHeight * 0.25;
 
             let x, y, svg, yTicks;
-
+            // Funkcija za kreiranje grafa
             function createGraph(data) {
                 const maxGoals = d3.max(data, function (d) { return d.G; });
                 yTicks = Math.ceil(maxGoals / 40) * 40;
@@ -101,7 +102,7 @@
 
                 x.domain(data.map(function (d) { return d.NAME; }));
                 y.domain([0, d3.max(data, function (d) { return d.G; })]);
-
+                // Dodavanje pozadinskih linija na graf 
                 svg.selectAll(".grid-line")
                     .data(d3.range(0, yTicks + 1, 40))
                     .enter().append("line")
@@ -110,7 +111,7 @@
                     .attr("x2", width)
                     .attr("y1", function (d) { return y(d); })
                     .attr("y2", function (d) { return y(d); });
-
+                // Dodavanje x-osi
                 svg.append("g")
                     .attr("class", "x-axis")
                     .attr("transform", "translate(0," + height + ")")
@@ -121,7 +122,7 @@
                     .attr("dx", "-.8em")
                     .attr("dy", "-.15em")
                     .attr("class", "player-name");
-
+                // Dodavanje y-osi i labela
                     svg.append("g")
                     .call(d3.axisLeft(y))
                     .append("text")
@@ -135,7 +136,7 @@
                     .style("fill", "black")
                     .text("Goals");
 
-
+                // Dodavanje "barova" za svaki podatak (bar chart)
                 svg.selectAll(".bar")
                     .data(data)
                     .enter().append("rect")
@@ -145,7 +146,7 @@
                     .attr("y", function (d) { return y(d.G); })
                     .attr("height", function (d) { return height - y(d.G); });
             }
-
+            // Funkcija za ažuriranje grafa s novim podacima
             function updateGraph(data) {
                 x.domain(data.map(function (d) { return d.NAME; }));
                 y.domain([0, d3.max(data, function (d) { return d.G; })]);
@@ -174,29 +175,29 @@
                     .attr("dy", "-.15em")
                     .attr("class", "player-name");
             }
-
+            //Stvaranje početnog grafa
             createGraph(data);
-
+            // Event listener za sortiranje silazno
             document.getElementById("descending").addEventListener("click", function () {
                 const sortedData = data.slice().sort((a, b) => b.G - a.G);
                 updateGraph(sortedData);
             });
-
+            // Event listener za sortiranje uzlazno
             document.getElementById("ascending").addEventListener("click", function () {
                 const sortedData = data.slice().sort((a, b) => a.G - b.G);
                 updateGraph(sortedData);
             });
-
+            // Event listener za random sortiranje   
             document.getElementById("random").addEventListener("click", function () {
                 const shuffledData = data.slice().sort(() => Math.random() - 0.5);
                 updateGraph(shuffledData);
             });
-
+            // Postavljanje početne aktivne klase na descending gumb
             document.getElementById("descending").classList.add('active');
-
+            // Dodavanje event listenera za promjenu aktivne klase na gumbima
             document.querySelectorAll('.filter-button').forEach(button => {
                 button.addEventListener('click', function () {
-                   
+                    // Dodavanje aktivne klase na kliknuti gumb
                     document.querySelectorAll('.filter-button').forEach(btn => {
                         btn.classList.remove('active');
                     });

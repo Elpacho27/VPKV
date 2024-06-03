@@ -52,9 +52,10 @@
     <svg class="chart"></svg>
 
     <script>
+        // Učitavanje podataka iz players.json datoteke
         d3.json("players.json").then(function (data) {
             const checkboxContainer = d3.select("#checkbox-container");
-
+            // Dodavanje checkbox-a za svakog igrača
             data.forEach(player => {
                 checkboxContainer.append("div")
                     .html(`<label><input type="checkbox" value="${player.NAME}">${player.NAME}</label>`);
@@ -64,6 +65,7 @@
             const showCheckboxesButton = document.getElementById("show-checkboxes");
 
             showStatsButton.addEventListener("click", function () {
+                // Dohvaćanje odabranih igrača
                 const selectedPlayers = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => checkbox.value);
 
                 if (selectedPlayers.length === 0) {
@@ -71,13 +73,16 @@
                     return;
                 }
 
+                // Sakrivanje checkbox-ova i prikazivanje gumba za ponovno prikazivanje
                 checkboxContainer.classed("hidden", true);
                 showCheckboxesButton.classList.remove("hidden");
 
+                // Filtriranje podataka prema odabranim igračima
                 const filteredData = data.filter(d => selectedPlayers.includes(d.NAME));
-
+                // Brisanje prethodnog grafa
                 d3.select(".chart").selectAll("*").remove();
 
+                // Postavljanje margina i dimenzija grafa(gotov isto na svakom grafu)
                 const margin = { top: 20, right: 80, bottom: 100, left: 50 },
                     width = parseInt(d3.select(".chart").style("width"), 10) - margin.left - margin.right,
                     height = 400 - margin.top - margin.bottom - 50;
@@ -87,19 +92,19 @@
                     .attr("height", height + margin.top + margin.bottom)
                     .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+                // Kreiranje skale za x-os
                 const xScale = d3.scaleBand()
                     .domain(selectedPlayers)
                     .range([0, width])
                     .padding(0.2);
-
+                // Skaliranje y-osi
                 const yScale = d3.scaleLinear()
                     .domain([0, d3.max(filteredData, d => Math.max(d.G, d.AS, d.BL))])
                     .nice()
                     .range([height, 0]);
 
                 const barWidth = xScale.bandwidth() / 3;
-
+                // Definiranje stats polja i polja za boje
                 const stats = ["G", "AS", "BL"];
                 const colors = {
                     "G": "#20376f",
@@ -107,6 +112,7 @@
                     "BL": "green"
                 };
 
+                // Dodavanje bar-ova 
                 stats.forEach((stat, index) => {
                     svg.selectAll(".bar-" + stat)
                         .data(filteredData)
@@ -118,17 +124,17 @@
                         .attr("height", d => height - yScale(d[stat]))
                         .attr("fill", colors[stat]);
                 });
-
+                // Dodavanje x-osi
                 svg.append("g")
                     .attr("transform", "translate(0," + height + ")")
                     .call(d3.axisBottom(xScale))
                     .selectAll("text")
                     .attr("transform", "rotate(-45)")
                     .style("text-anchor", "end");
-
+                // Dodavanje y-osi
                 svg.append("g")
                     .call(d3.axisLeft(yScale));
-
+                // Dodavanje legende
                 const legend = svg.selectAll(".legend")
                     .data(stats)
                     .enter().append("g")
@@ -152,7 +158,7 @@
                         if (d === "BL") return "Blocks";
                     });
             });
-
+            // Event listener za prikazivanje checkbox-ova
             showCheckboxesButton.addEventListener("click", function () {
                 checkboxContainer.classed("hidden", false);
                 showCheckboxesButton.classList.add("hidden");

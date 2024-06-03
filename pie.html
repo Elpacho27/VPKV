@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-
+<!-- CSS za Pie Chart -->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Goals by Club</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        
         .container {
             position: relative;
             width: 100vw;
@@ -55,15 +56,20 @@
 </head>
 
 <body>
+    <!-- SVG kontejner za prikaz grafa -->
     <div class="container">
         <svg class="chart"></svg>
+        <!-- Html element za legendu-->
         <div class="legend"></div>
     </div>
 
     <script>
+        // Učitavanje podataka iz JSON datoteke
         d3.json("players.json").then(function (data) {
+            // Varijabla za pohranu podataka o golovima svakog kluba, u obliku "Map" (slično kao "dictionary")
             const clubsData = new Map();
 
+            // Računanje ukupnog broja golova za svaki klub
             data.forEach(function (d) {
                 const club = d.CLUB;
                 const goals = d.G;
@@ -74,33 +80,38 @@
                     clubsData.set(club, goals);
                 }
             });
-
+            // Računanje ukupnog broja golova
             const totalGoals = d3.sum(Array.from(clubsData.values()));
+            // Izvlačenje klubova, bez ponavljanja 
             const uniqueClubs = Array.from(clubsData.keys());
+            // Boje koje sam koristio za prikaz 
             const colorPalette = [
                 "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
                 "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf",
                 "#aec7e8", "#ffbb78", "#98df8a", "#ff9896", "#c5b0d5",
                 "#c49c94", "#f7b6d2", "#c7c7c7"
             ];
-
+            // Skaliranje boja za klubove
             const colorScale = d3.scaleOrdinal()
                 .domain(uniqueClubs)
                 .range(colorPalette);
 
+            //pie generatora
             const pie = d3.pie()
                 .value(d => d[1]);
-
+            //arc generatora 
             const arc = d3.arc()
                 .innerRadius(0)
                 .outerRadius(Math.min(400, 300) / 2 - 10);
 
+            // za konstantu "svg" uzimamo i postavljamo ranije definirano hmtl svg dio
             const svg = d3.select('.chart')
                 .attr('width', 400)
                 .attr('height', 300)
                 .append('g')
                 .attr('transform', 'translate(' + 200 + ',' + 150 + ')');
 
+            // Prikaz teksta s ukupnim brojem golova
             svg.append('text')
                 .attr('class', 'chart-text')
                 .attr('x', 0)
@@ -109,6 +120,7 @@
                 .text(`All club goals: ${totalGoals}`)
                 .attr('transform', 'rotate(0)');
 
+            // Dodavanje tooltipa
             const arcs = svg.selectAll("arc")
                 .data(pie(Array.from(clubsData)))
                 .enter()
@@ -132,17 +144,19 @@
                 .attr('d', arc)
                 .attr('fill', d => colorScale(d.data[0]));
 
+          
+            // Dodavanje legende 
             const legend = d3.select('.legend')
                 .selectAll('.legend-item')
                 .data(Array.from(clubsData))
                 .enter()
                 .append('div')
                 .attr('class', 'legend-item');
-
+            // Prikaz kvadratića boja u legendi
             legend.append('div')
                 .attr('class', 'legend-color')
                 .style('background-color', d => colorScale(d[0]));
-
+            // Prikaz teksta s postotkom golova po klubu u legendi
             legend.append('span')
                 .text(d => `${d[0]}: ${(d[1] / totalGoals * 100).toFixed(2)}%`);
 
