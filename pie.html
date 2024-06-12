@@ -15,7 +15,7 @@
         }
 
         .chart {
-            width: 70%;
+            width: 100%;
             height: 100%;
             position: absolute;
             top: 70px;
@@ -104,10 +104,13 @@
                 .innerRadius(0)
                 .outerRadius(Math.min(400, 300) / 2 - 10);
 
+                width = window.screen.availWidth * 0.45,
+                height = window.screen.availHeight * 0.25;
+
             // za konstantu "svg" uzimamo i postavljamo ranije definirano hmtl svg dio
             const svg = d3.select('.chart')
-                .attr('width', 400)
-                .attr('height', 300)
+                .attr('width', width)
+                .attr('height', height)
                 .append('g')
                 .attr('transform', 'translate(' + 200 + ',' + 150 + ')');
 

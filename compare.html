@@ -84,8 +84,8 @@
 
                 // Postavljanje margina i dimenzija grafa(gotov isto na svakom grafu)
                 const margin = { top: 20, right: 80, bottom: 100, left: 50 },
-                    width = parseInt(d3.select(".chart").style("width"), 10) - margin.left - margin.right,
-                    height = 400 - margin.top - margin.bottom - 50;
+                    width = window.screen.availWidth * 0.45,
+                    height = window.screen.availHeight * 0.25;
 
                 const svg = d3.select(".chart")
                     .attr("width", width + margin.left + margin.right)
