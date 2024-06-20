@@ -8,7 +8,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         .player-name {
-            font-size: 10px;
+            font-size: 15px;
         }
 
         .grid-line {
@@ -18,7 +18,7 @@
         }
 
         .bar-text {
-            font-size: 12px;
+            font-size: 15px;
             fill: black;
             text-anchor: middle;
         }
@@ -36,6 +36,7 @@
             background-color: rgb(0, 0, 0);
             background-color: rgba(0, 0, 0, 0.4);
             padding-top: 60px;
+            
         }
 
         .modal-content {
@@ -44,6 +45,7 @@
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
+            color: white;
         }
 
         .close {
@@ -65,7 +67,7 @@
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
-            margin-right: 650px;
+            margin-right: 150px;
         }
 
         .filter-button {
@@ -121,8 +123,8 @@
             d3.select("svg").remove();
             // Postavljanje margina i dimenzija grafikona
             const margin = { top: 20, right: 30, bottom: 100, left: 60 },
-                width = window.screen.availWidth * 0.45,
-                height = window.screen.availHeight * 0.25;
+                width = window.screen.availWidth*0.9 ,
+                height = window.screen.availHeight*0.7;
             //Dodavanje samo svg-a
             const svg = d3.select("body").append("svg")
                 .attr("width", width + margin.left + margin.right)
@@ -140,7 +142,7 @@
             const y = d3.scaleLinear()
                 .range([height, 0]);
 
-            x.domain(data.map(function (d) { return d.NAME; }));
+            x.domain(data.map(function (d) { return extractLastName(d.NAME) }));
             y.domain([0, maxValue]);
             // Dodavanje pozadinskih linija na graf
             svg.selectAll(".grid-line")
@@ -171,7 +173,7 @@
                 .data(data)
                 .enter().append("rect")
                 .attr("class", "bar")
-                .attr("x", function (d, i) { return x(d.NAME); })
+                .attr("x", function (d, i) { return x(extractLastName(d.NAME)); })
                 .attr("width", x.bandwidth() - 3.5)
                 .attr("y", function (d) { return y(d[filter]); })
                 .attr("height", function (d) { return height - y(d[filter]); })
@@ -181,9 +183,9 @@
                     d3.select(this).style("fill", "#e20014");
                     svg.append("text")
                         .attr("class", "bar-text")
-                        .attr("x", x(d.NAME) + x.bandwidth() / 2)
+                        .attr("x", x(extractLastName(d.NAME)) + x.bandwidth() / 2)
                         .attr("y", y(d[filter]) - 5)
-                        .style("fill", "black") 
+                        .style("fill", "red") 
                         .text(d.NAME);
                     d3.select(this).attr("data-color", currentColor);
                 })
@@ -248,6 +250,15 @@
                 document.getElementById('assists-filter').classList.add('active');
             } else if (filter === 'BL') {
                 document.getElementById('blocks-filter').classList.add('active');
+            }
+        }
+
+        function extractLastName(fullName) {
+            const names = fullName.split(",");
+            if (names.length > 1) {
+                return names[0].trim(); 
+            } else {
+                return fullName.trim(); 
             }
         }
     </script>

@@ -8,7 +8,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         .player-name {
-            font-size: 10px;
+            font-size: 14px;
         }
 
         .grid-line {
@@ -34,13 +34,13 @@
 
         .filter-buttons {
             position: absolute;
-            bottom: 20px;
+            bottom: 10px;
             left: 20px;
             display: flex;
             flex-direction: row;
             align-items: center;
             gap: 10px;
-            
+
         }
 
         .filter-button {
@@ -59,8 +59,9 @@
 
         .filter-button.active {
             background-color: #e20014;
-            
+
         }
+
         .filter-button:hover {
             background-color: #005bb5;
         }
@@ -78,8 +79,8 @@
         // Učitavanje podataka iz players.json datoteke
         d3.json("players.json").then(function (data) {
             const margin = { top: 20, right: 30, bottom: 100, left: 60 },
-                width = window.screen.availWidth * 0.45,
-                height = window.screen.availHeight * 0.25;
+                width = window.screen.availWidth*0.9 ,
+                height = window.screen.availHeight*0.7 ;
 
             let x, y, svg, yTicks;
             // Funkcija za kreiranje grafa
@@ -100,7 +101,7 @@
                     .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-                x.domain(data.map(function (d) { return d.NAME; }));
+                x.domain(data.map(function (d) { return extractLastName(d.NAME); }));
                 y.domain([0, d3.max(data, function (d) { return d.G; })]);
                 // Dodavanje pozadinskih linija na graf 
                 svg.selectAll(".grid-line")
@@ -123,7 +124,7 @@
                     .attr("dy", "-.15em")
                     .attr("class", "player-name");
                 // Dodavanje y-osi i labela
-                    svg.append("g")
+                svg.append("g")
                     .call(d3.axisLeft(y))
                     .append("text")
                     .attr("class", "y-axis-label")
@@ -131,7 +132,7 @@
                     .attr("y", -60)
                     .attr("x", -height / 2)
                     .attr("dy", "1em")
-                    .style("font-size", "16px") 
+                    .style("font-size", "16px")
                     .style("text-anchor", "middle")
                     .style("fill", "black")
                     .text("Goals");
@@ -141,14 +142,14 @@
                     .data(data)
                     .enter().append("rect")
                     .attr("class", "bar")
-                    .attr("x", function (d) { return x(d.NAME); })
+                    .attr("x", function (d) { return x(extractLastName(d.NAME)); })
                     .attr("width", x.bandwidth() - 3.5)
                     .attr("y", function (d) { return y(d.G); })
                     .attr("height", function (d) { return height - y(d.G); });
             }
             // Funkcija za ažuriranje grafa s novim podacima
             function updateGraph(data) {
-                x.domain(data.map(function (d) { return d.NAME; }));
+                x.domain(data.map(function (d) { return extractLastName(d.NAME); }));
                 y.domain([0, d3.max(data, function (d) { return d.G; })]);
 
                 svg.selectAll(".grid-line")
@@ -160,7 +161,7 @@
                 svg.selectAll(".bar")
                     .data(data)
                     .transition()
-                    .attr("x", function (d) { return x(d.NAME); })
+                    .attr("x", function (d) { return x(extractLastName(d.NAME)); })
                     .attr("width", x.bandwidth() - 3.5)
                     .attr("y", function (d) { return y(d.G); })
                     .attr("height", function (d) { return height - y(d.G); });
@@ -202,7 +203,7 @@
                         btn.classList.remove('active');
                     });
 
-                    
+
                     this.classList.add('active');
                 });
             });
@@ -211,6 +212,15 @@
         }).catch(function (error) {
             console.error("Error loading the data", error);
         });
+
+        function extractLastName(fullName) {
+            const names = fullName.split(",");
+            if (names.length > 1) {
+                return names[0].trim(); 
+            } else {
+                return fullName.trim(); 
+            }
+        }
     </script>
 </body>
 

@@ -84,8 +84,8 @@
 
                 // Postavljanje margina i dimenzija grafa(gotov isto na svakom grafu)
                 const margin = { top: 20, right: 80, bottom: 100, left: 50 },
-                    width = window.screen.availWidth * 0.45,
-                    height = window.screen.availHeight * 0.25;
+                    width = window.screen.availWidth * 0.7,
+                    height = window.screen.availHeight * 0.5;
 
                 const svg = d3.select(".chart")
                     .attr("width", width + margin.left + margin.right)
@@ -130,7 +130,8 @@
                     .call(d3.axisBottom(xScale))
                     .selectAll("text")
                     .attr("transform", "rotate(-45)")
-                    .style("text-anchor", "end");
+                    .style("text-anchor", "end")
+                    .style("font-size", "16px");
                 // Dodavanje y-osi
                 svg.append("g")
                     .call(d3.axisLeft(yScale));
