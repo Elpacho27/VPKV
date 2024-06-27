@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Golovi sa hoverom</title>
+    <title>Golovi i Sortiranje</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         .player-name {
-            font-size: 10px;
+            font-size: 15px;
         }
 
         .grid-line {
@@ -18,11 +18,10 @@
         }
 
         .bar-text {
-            font-size: 12px;
+            font-size: 15px;
             fill: black;
             text-anchor: middle;
         }
-
 
         .modal {
             display: none;
@@ -39,11 +38,12 @@
         }
 
         .modal-content {
-            background-color: #e20014;
+            background-color: green;
             margin: 5% auto;
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
+            color: white;
         }
 
         .close {
@@ -60,15 +60,15 @@
             cursor: pointer;
         }
 
-
-        .filters {
+        .filters,
+        .sort-buttons {
             display: flex;
             justify-content: center;
             margin-bottom: 20px;
-            margin-right: 650px;
         }
 
-        .filter-button {
+        .filter-button,
+        .sort-button {
             margin-right: 10px;
             padding: 10px 20px;
             cursor: pointer;
@@ -80,11 +80,13 @@
             width: 79.27px !important;
         }
 
-        .filter-button:hover {
+        .filter-button:hover,
+        .sort-button:hover {
             background-color: #e20014;
         }
 
-        .filter-button.active {
+        .filter-button.active,
+        .sort-button.active {
             background-color: #e20014;
         }
     </style>
@@ -98,6 +100,11 @@
         <button class="filter-button" id="blocks-filter" onclick="updateGraph('BL')">Blocks</button>
     </div>
 
+    <div class="sort-buttons">
+        <button class="sort-button" id="descending">Dsc</button>
+        <button class="sort-button" id="ascending">Asc</button>
+        <button class="sort-button" id="random">Random</button>
+    </div>
 
     <div id="myModal" class="modal">
         <div class="modal-content">
@@ -109,6 +116,7 @@
     <script>
         const colors = ['#20376f'];
         let data;
+        let currentFilter = 'G';
         // Učitavanje podataka iz players.json datoteke
         d3.json("players.json").then(function (loadedData) {
             data = loadedData;
@@ -116,22 +124,24 @@
         }).catch(function (error) {
             console.error("Error loading the data");
         });
-        // Funkcija za kreiranje grafikona
-        function createGraph(filter) {
+
+        function createGraph(filteredData) {
             d3.select("svg").remove();
             // Postavljanje margina i dimenzija grafikona
             const margin = { top: 20, right: 30, bottom: 100, left: 60 },
-                width = window.screen.availWidth * 0.45,
-                height = window.screen.availHeight * 0.25;
-            //Dodavanje samo svg-a
+                width = window.screen.availWidth * 0.9,
+                height = window.screen.availHeight * 0.7;
+
+            // Dodavanje samo svg-a
             const svg = d3.select("body").append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-            const maxValue = d3.max(data, function (d) { return d[filter]; });
+            const maxValue = d3.max(filteredData, function (d) { return d[currentFilter]; });
             const yTicks = Math.ceil(maxValue / 10) * 10;
+
             // Skaliranje vrijednosti x i y osi
             const x = d3.scaleBand()
                 .range([0, width])
@@ -140,8 +150,9 @@
             const y = d3.scaleLinear()
                 .range([height, 0]);
 
-            x.domain(data.map(function (d) { return d.NAME; }));
+            x.domain(filteredData.map(function (d) { return extractLastName(d.NAME) }));
             y.domain([0, maxValue]);
+
             // Dodavanje pozadinskih linija na graf
             svg.selectAll(".grid-line")
                 .data(d3.range(0, yTicks + 1, 10))
@@ -151,6 +162,7 @@
                 .attr("x2", width)
                 .attr("y1", function (d) { return y(d); })
                 .attr("y2", function (d) { return y(d); });
+
             // Dodavanje x osi
             svg.append("g")
                 .attr("transform", "translate(0," + height + ")")
@@ -162,39 +174,37 @@
                 .attr("dy", "-.15em")
                 .attr("class", "player-name");
 
-                
             // Dodavanje y osi
             svg.append("g")
                 .call(d3.axisLeft(y));
-             // Dodavanje stupaca (barova)
+
+            // Dodavanje stupaca (barova)
             svg.selectAll(".bar")
-                .data(data)
+                .data(filteredData)
                 .enter().append("rect")
                 .attr("class", "bar")
-                .attr("x", function (d, i) { return x(d.NAME); })
+                .attr("x", function (d) { return x(extractLastName(d.NAME)); })
                 .attr("width", x.bandwidth() - 3.5)
-                .attr("y", function (d) { return y(d[filter]); })
-                .attr("height", function (d) { return height - y(d[filter]); })
-                .style("fill", function (d, i) { return colors[0]; })
+                .attr("y", function (d) { return y(d[currentFilter]); })
+                .attr("height", function (d) { return height - y(d[currentFilter]); })
+                .style("fill", function (d) { return colors[0]; })
                 .on("mouseover", function (event, d) {
                     const currentColor = d3.select(this).style("fill");
                     d3.select(this).style("fill", "#e20014");
                     svg.append("text")
                         .attr("class", "bar-text")
-                        .attr("x", x(d.NAME) + x.bandwidth() / 2)
-                        .attr("y", y(d[filter]) - 5)
-                        .style("fill", "black") 
+                        .attr("x", x(extractLastName(d.NAME)) + x.bandwidth() / 2)
+                        .attr("y", y(d[currentFilter]) - 5)
+                        .style("fill", "red")
                         .text(d.NAME);
                     d3.select(this).attr("data-color", currentColor);
                 })
-                // Prikazivanje modalnog prozora s detaljima o igraču
-                .on("mouseout", function (event, d) {
+                .on("mouseout", function () {
                     const color = d3.select(this).attr("data-color");
                     d3.select(this).style("fill", color);
                     svg.selectAll(".bar-text").remove();
                 })
                 .on("click", function (event, d) {
-
                     const modal = document.getElementById("myModal");
                     const playerDetails = document.getElementById("player-details");
                     playerDetails.innerHTML = `
@@ -218,39 +228,66 @@
                         <p>HPI: ${d.HPI}</p>
                     `;
                     modal.style.display = "block";
-                    
                 });
 
-                 // Zatvaranje modalnog prozora kada se klikne na X
+            // Zatvaranje modalnog prozora kada se klikne na X
             document.querySelector(".close").onclick = function () {
                 document.getElementById("myModal").style.display = "none";
             };
 
             // Zatvaranje modalnog prozora kada se klikne izvan njega
             window.onclick = function (event) {
-                const modal = document.getElementById("myModal");
-                if (event.target == modal) {
-                    modal.style.display = "none";
+                if (event.target == document.getElementById("myModal")) {
+                    document.getElementById("myModal").style.display = "none";
                 }
             };
         }
-         // Funkcija za ažuriranje grafa prema odabranom buttonu
-        function updateGraph(filter) {
-            createGraph(filter);
 
-            // Postavljanje aktivne klase na odgovarajući button
-            document.querySelectorAll('.filter-button').forEach(button => {
-                button.classList.remove('active');
-            });
-            if (filter === 'G') {
-                document.getElementById('goals-filter').classList.add('active');
-            } else if (filter === 'AS') {
-                document.getElementById('assists-filter').classList.add('active');
-            } else if (filter === 'BL') {
-                document.getElementById('blocks-filter').classList.add('active');
+        function updateGraph(filterType) {
+            currentFilter = filterType;
+            d3.selectAll(".filter-button").classed("active", false);
+            if (filterType === 'G') {
+                document.getElementById("goals-filter").classList.add("active");
+            } else if (filterType === 'AS') {
+                document.getElementById("assists-filter").classList.add("active");
+            } else if (filterType === 'BL') {
+                document.getElementById("blocks-filter").classList.add("active");
             }
+
+            const sortMethod = document.querySelector('.sort-button.active')?.id || 'descending';
+            const filteredData = sortData(data, filterType, sortMethod);
+            createGraph(filteredData);
         }
+
+        function sortData(data, filterType, sortMethod) {
+            let sortedData;
+            if (sortMethod === 'ascending') {
+                sortedData = data.slice().sort((a, b) => d3.ascending(a[filterType], b[filterType]));
+            } else if (sortMethod === 'descending') {
+                sortedData = data.slice().sort((a, b) => d3.descending(a[filterType], b[filterType]));
+            } else if (sortMethod === 'random') {
+                sortedData = d3.shuffle(data.slice());
+            }
+            return sortedData;
+        }
+
+        function extractLastName(fullName) {
+            return fullName.split(" ").slice(-1)[0];
+        }
+
+        document.querySelectorAll('.sort-button').forEach(button => {
+            button.addEventListener('click', function () {
+                document.querySelectorAll('.sort-button').forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                const filteredData = sortData(data, currentFilter, this.id);
+                createGraph(filteredData);
+            });
+        });
+
+        document.getElementById("goals-filter").classList.add("active");
+        document.getElementById("descending").classList.add("active");
     </script>
+
 </body>
 
 </html>
